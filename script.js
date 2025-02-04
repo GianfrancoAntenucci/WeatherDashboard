@@ -1,4 +1,4 @@
-const API_KEY = process.env.OPENWEATHER_API_KEY;
+const API_KEY = window.API_KEY;
 
 async function getWeather() {
     const locationInput = document.getElementById('locationInput');
