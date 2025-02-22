@@ -3,27 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Dashboard</title>
+    <title>Weather App</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="weather-dashboard">
-        <h1>Weather Dashboard</h1>
+        <h1>Weather Finder</h1>
         
-        <div class="input-section">
-            <input type="text" id="locationInput" placeholder="Enter city name">
-            <button onclick="getWeather()">Get Weather</button>
-        </div>
-
-        <div id="errorMessage" class="error-message"></div>
-
-        <div id="weatherInfo" class="weather-info">
+        <input type="text" 
+               id="locationInput" 
+               placeholder="Enter city name"
+               class="search-input">
+        
+        <div id="weatherInfo" class="weather-info" style="display: none;">
             <h2 id="locationName"></h2>
-            <div id="temperature"></div>
-            <div id="description"></div>
+            <div class="temperature" id="temperature"></div>
+            <p class="description" id="description"></p>
         </div>
+        
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
     </div>
-    <script src="config.js"></script>
-    <script src="script.js"></script>
+
+    <script type="module">
+        // Import configuration from config.js
+        import { weatherConfig } from './config.js';
+
+        // Your existing code with API_KEY references updated
+        async function getWeather() {
+            const locationInput = document.getElementById('locationInput');
+            const weatherInfo = document.getElementById('weatherInfo');
+            const errorMessage = document.getElementById('errorMessage');
+
+            weatherInfo.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            try {
+                const city = locationInput.value.trim();
+                if (!city) throw new Error('Please enter a location');
+
+                // Use config values from weatherConfig
+                const geoUrl = `${weatherConfig.geoUrl}?q=${city}&limit=1&appid=${weatherConfig.apiKey}`;
+                const geoResponse = await fetch(geoUrl);
+                const geoData = await geoResponse.json();
+
+                if (!geoData.length) throw new Error('Location not found');
+
+                const { lat, lon } = geoData[0];
+                const weatherUrl = `${weatherConfig.weatherUrl}?lat=${lat}&lon=${lon}&appid=${weatherConfig.apiKey}&units=${weatherConfig.units}`;
+                
+                const weatherResponse = await fetch(weatherUrl);
+                const weatherData = await weatherResponse.json();
+
+                // Update UI
+                document.getElementById('locationName').textContent = weatherData.name;
+                document.getElementById('temperature').textContent = `${Math.round(weatherData.main.temp)}°C`;
+                document.getElementById('description').textContent = weatherData.weather[0].description;
+                weatherInfo.style.display = 'block';
+
+            } catch (error) {
+                errorMessage.textContent = error.message || 'An error occurred. Please try again.';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        // Enter key listener
+        document.getElementById('locationInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') getWeather();
+        });
+    </script>
 </body>
 </html>
